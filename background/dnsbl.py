@@ -170,8 +170,10 @@ class DNSblack(AnalysisBase):
 
 			if(offline_network):
 
-				sip = ele["sourceIPv4Address"]
-				count = ele["count"]
+				#sip = ele["sourceIPv4Address"]
+				#count = ele["count"]
+				sip = ele[0]
+				count = ele[1]
 
 
 				for k in bl_network_lists_prep.keys():
@@ -194,8 +196,11 @@ class DNSblack(AnalysisBase):
 					# use this instead, if needed 
 					#print int_to_dotted(ele["sourceIPv4Address"])
 
-					sip = ele["sourceIPv4Address"]
-					count = ele["count"]
+					#sip = ele["sourceIPv4Address"]
+					#count = ele["count"]
+
+					sip = ele[0]
+					count = ele[1]
 			
 					for comp in ips:
 						#print "comparing " + str(comp) + " with " + str(sip)
@@ -205,16 +210,19 @@ class DNSblack(AnalysisBase):
 							self.dataBackend.insert("blacklist_badhosts", {"bucket" : startBucket, "blacklist" : l, "black_host" : sip, "black_host_string" : int_to_dotted(sip), "count" : count})
 	
 			if(online):
-				string_ip = int_to_dotted(ele["sourceIPv4Address"])
-				count = ele["count"]
+				#string_ip = int_to_dotted(ele["sourceIPv4Address"])
+				#count = ele["count"]
+
+				string_ip = int_to_dotted(ele[0])
+				count = ele[1]
 
 				for bl_adr in bl_address:
 					blacklisted = (getRecord(string_ip, dnsservers, bl_adr))
 				
 					if(blacklisted):
 						print string_ip + " found in blacklist"
-						self.dataBackend.insert("blacklist_badhosts", {"bucket" : startBucket, "blacklist" : bl_adr, "black_host" : ele["sourceIPv4Address"], "black_host_string" : string_ip, "count" : count})
-
+						#self.dataBackend.insert("blacklist_badhosts", {"bucket" : startBucket, "blacklist" : bl_adr, "black_host" : ele["sourceIPv4Address"], "black_host_string" : string_ip, "count" : count})
+						self.dataBackend.insert("blacklist_badhosts", {"bucket" : startBucket, "blacklist" : bl_adr, "black_host" : ele[0], "black_host_string" : string_ip, "count" : count})
 
 		if(query):			
 			#data = {"easy" : False, "count_more" : 1}
@@ -223,8 +231,8 @@ class DNSblack(AnalysisBase):
 			self.dataBackend.print_cursor()
 
 		if(aggregate):
-			#self.dataBackend.aggregate("blacklist_badhosts", {"group" : ["blackip", "blacklist"], "sum" : ["appearance"]} )
-			self.dataBackend.aggregate("blacklist_badhosts", {"group" : ["black_hosts", "blacklist"],  "sum" : ["count"], "show" : ["count"] , "limit" : 200, "skip" : 0, "sort" : ["count"]} )
+			self.dataBackend.aggregate("blacklist_badhosts", {"group" : ["blacklist"], "sum" : ["count"], "show" : ["count"] , "limit" : 200, "skip" : 0, "sort" : ["count"]})
+			#self.dataBackend.aggregate("blacklist_badhosts", {"group" : ["black_hosts", "blacklist"],  "sum" : ["count"], "show" : ["count"] , "limit" : 200, "skip" : 0, "sort" : ["count"]} )
 		
 
 			#self.dataBackend.aggregate("blacklist_badhosts", {"sum" : ["count"]} )

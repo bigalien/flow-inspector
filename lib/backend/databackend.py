@@ -32,11 +32,220 @@ class Backend:
 	def query(self, collectionName, string):
 		pass
 
+	def query2(self, collectionName, data):
+		pass
+
 	def insert(self, collectionName, fieldDict):
 		pass
 
 	def data_query(self, collectionNames, fields):
 		pass
+
+	def data_aggregate(self):
+		pass
+
+class MongoDBBackend(Backend):
+	def __init__(self, host, port, user, password,databaseName):
+		import pymongo
+		Backend.__init__(self, host, port, user, password, databaseName)
+		self.connect()
+		print "init"
+
+	def prepareCollection(self, name, fieldDict):
+		print "prep"
+		
+
+	def connect(self):
+		import pymongo
+		try:
+			print "connect testverbindung"
+			self.con = pymongo.Connection(self.host, self.port)
+			self.db = self.con[self.databaseName]
+
+		except:
+			print >> sys.stderr, "Cannont connect to MongoDB"
+			sys.exit(1)
+
+	def insert(self, collectionName, fieldDict):
+		import pymongo	
+		try:
+			print "insert"
+			coll = self.db[collectionName]
+			coll.insert(fieldDict)
+		except:
+			print >> sys.stderr, "MongoDB insert error"
+			sys.exit(1)
+
+	
+
+	def query(self, collectionName, string):
+		import pymongo
+
+		try:	
+			print "query"
+			coll = self.db[collectionName]
+			self.cursor = coll.find({"sourceTransportPort" : {"$gte" : 5000}})
+			return self.cursor #.sort("sourceTransportPort")
+		except:
+			print >> sys.stderr, "MongoDB query error"
+			sys.exit(1)
+
+	def query2(self, collectionName, data):
+		import pymongo
+
+		keys = {"sourceTransportPort" : ["s_ports_greater", "s_ports_smaller", "s_include_ports", "s_exclude_ports"],
+			"destinationTransportPort" : ["d_ports_greater", "d_ports_smaller", "d_include_ports", "d_exclude_ports"],
+			"sourceIPv4Address" : ["null", "null", "s_include_address", "s_exclude_address"],
+			"destinationIPv4Address" : ["null", "null", "d_include_address", "d_exclude_address"],
+			"protocolIdentifier" : ["null", "null", "include_protocol", "exclude_protocol"],
+			"packetDeltaCount" : ["packets_more", "packets_less", "null", "null"],
+			"octetDeltaCount" : ["bytes_more", "bytes_less", "null", "null"],
+			"flows" : ["flows_more", "flows_less", "null", "null"],
+			"access_fails" : ["fails_more", "fails_less", "null", "null"],
+			"access_fails_per" : ["fails_per_more", "fails_per_less", "null", "null"],
+			"access_tries" : ["tries_more", "tries_less", "null", "null"],
+			"access_success" : ["success_more", "success_less", "null", "null"],
+			"access_success_per" : ["success_per_more", "success_per_less", "null", "null"],
+			"hosts_count" : ["hosts_more", "hosts_less", "null", "null"],
+			"black_hosts" : ["null", "null", "include_address", "exclude_address"],
+			"blacklist" : ["null", "null", "include_list", "exclude_list"],
+			"count" : ["count_more", "count_less", "null", "null"]}
+
+
+		try:	
+			self.qu = {}
+			coll = self.db[collectionName]
+			
+
+			if(data.get("easy", False) == True):
+				self.cursor = coll.find({})
+				return self.cursor #.sort("sourceTransportPort")
+			#else:
+			#	if(data.get("s_ports_greater", False)):
+			#		self.qu["sourceTransportPort"].update({"$gt" : data["s_ports_greater"]})
+					
+			#	if(data.get("s_ports_smaller", False)):
+			#		self.qu["sourceTransportPort"].update({"$lt" : data["s_ports_smaller"]})
+
+			#	if(data.get("s_include_ports", False)):
+			#		self.qu["sourceTransportPort"].update({"$in" : data["s_include_ports"]})
+					
+			#	if(data.get("s_exclude_ports", False)):
+			#		self.qu["sourceTransportPort"].update({"$nin" : data["s_exclude_ports"]})
+
+
+			else:
+				for k in keys.keys():
+					if(data.get(keys[k][0], False)):
+
+						if(k not in self.qu): self.qu.update({k : {}})					
+	
+						self.qu[k].update({"$gt" : data[keys[k][0]]})
+					
+					if(data.get(keys[k][1], False)):
+						if(k not in self.qu): self.qu.update({k : {}})
+						self.qu[k].update({"$lt" : data[keys[k][1]]})
+
+					if(data.get(keys[k][2], False)):
+						if(k not in self.qu): self.qu.update({k : {}})
+						self.qu[k].update({"$in" : data[keys[k][2]]})
+					
+					if(data.get(keys[k][3], False)):
+						if(k not in self.qu): self.qu.update({k : {}})
+						self.qu[k].update({"$nin" : data[keys[k][3]]})
+									
+			self.cursor = coll.find(self.qu)
+			print self.qu
+			return self.cursor 
+
+		except:
+			print >> sys.stderr, "MongoDB query error"
+			sys.exit(1)
+
+	def print_cursor(self):
+		for obj in self.cursor:
+			print obj
+
+	def aggregate(self, collectionName, com):
+		import pymongo
+
+		keys = {"black_hosts" : "black_host_string",
+			"blacklist" : "blacklist",
+			"count" : "count"}
+
+		qu = {}
+		group = {}
+		su = {}
+		pr = {}
+		li = {}
+		sk = {}
+		srt = {}
+
+		for k in com.keys():
+			if(k == "group"):
+				print "grouping"				
+				
+				for ele in com["group"]:
+					group.update({ele : "$" + keys[ele]})
+			
+			if(k == "sum"):
+				print "summing"
+
+				for ele in com["sum"]:
+					su.update({ele : {"$sum" : "$" + keys[ele]}})
+			
+			qu.update({"$group" : {"_id" : group}})
+			qu["$group"].update(su)
+
+			if(k == "show"):
+				print "show"
+				
+				for ele in com["show"]:
+					pr.update({keys[ele] : 1})
+			pr.update({"_id" : 1})
+
+			if(k == "limit"):
+				print "limit"
+
+				li.update({"$limit" : com["limit"]})
+
+			if(k == "skip"):
+				print "skip"
+		
+				sk.update({"$skip" : com["skip"]})
+
+			if(k == "sort"):
+				print "sort"
+	
+				for ele in com["sort"]:
+					srt.update({keys[ele] : 1})
+
+			
+						
+
+		
+		agg = self.db[collectionName].aggregate([qu, {"$project" : pr}, sk, li, {"$sort" : srt}])	
+		print agg["result"]
+
+		
+		#tmp = self.db[collectionName].aggregate( [{ "$group" : {"_id" : { "tmp1" : "$black_host_string"}, "total" : { "$sum" : "$count" } } }] )
+		#tmp = self.db[collectionName].aggregate( [ { "$group" : {"_id" : "$black_host_string", "total" : { "$sum" : "$count" }, "total2" : { "$sum" : "$count" } }},  {"$project" : {"_id" : 1, "total2" : 1}}])
+		#tmp = self.db[collectionName].aggregate( [{ "$group" : {"_id" : "$blacklist", "total" : { "$sum" : "$count" } } } ]);
+
+		#tmp = self.db[collectionName].aggregate( [{ "$project" : {"_id" : 0, "black_host_string" : 1}} ]);
+		#print "begin find"
+		#print tmp["result"]		
+		
+		#tmp = self.db[collectionName].aggregate([{"$group": {"_id": {"blacklist": "$blacklist", "blackip": "$black_host_string"}, "appearance": {"$sum": "$count"}}])
+		
+		#for obj in tmp:
+		#	print obj["result"]
+#		print "end find"	
+
+	
+#, { "$match" : { "total" : { "$gte" : 2 } } }
+
+#, {"$project" : {"total" : 1, "_id" : 0}}
 
 class MySQLBackend(Backend):
 	def __init__(self, host, port, user, password, databaseName):
@@ -265,8 +474,7 @@ def getBackendObject(backend, host, port, user, password, databaseName):
 	elif backend == "oracle":
 		return OracleBackend(host, port, user, password, databaseName)
 	elif backend == "mongo":
-		return None
-	elif backend == "none":
-		return None
+		print "gebe mongo zurueck"
+		return MongoDBBackend(host, port, user, password, databaseName)
 	else:
 		raise Exception("Data backend " + backend + " is not a supported backend")
