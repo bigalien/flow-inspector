@@ -21,10 +21,10 @@ flowDBName="flows_vermont_10"
 db_backend = "mysql"
 db_host = "127.0.0.1"
 db_port = 3306
-db_user = "root"
-db_password = "chefkoch"
+db_user = "vermont"
+db_password = "writerwriterwriter"
 #db_name = "flows_fi_mytest9"
-db_name = "flows_fi2"
+db_name = "flow_inspector"
 
 # Destination Data Backend (for miscelanous data)
 #----------------------------------------------------------------
@@ -33,7 +33,7 @@ data_backend_host = "127.0.0.1"
 data_backend_port = 27017
 data_backend_user = None
 data_backend_password = None
-data_backend_name = "mydb"
+data_backend_name = "simon_db"
 
 
 
@@ -42,7 +42,7 @@ data_backend_name = "mydb"
 # The different bucket sizes in seconds to aggregate.
 # Each bucket size leads to a new collection in the database.
 # This list is assumed be sorted ascending!
-flow_bucket_sizes = [ 5*60 ]
+flow_bucket_sizes = [ 10*60 ]
 # Those values have to match in order to aggregate two flows
 flow_aggr_values = ["sourceIPv4Address", "destinationIPv4Address", "sourceTransportPort", "destinationTransportPort", "protocolIdentifier"]
 # Those columns will be summed up

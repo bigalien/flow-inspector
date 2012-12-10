@@ -38,6 +38,8 @@ class DNSblack(AnalysisBase):
 			#ips.append(2192532937)
 			#ips.append(2192729352)
 			#print int_to_dotted(2192729352)
+			#print int_to_dotted(3706053059)
+			#ips.append(3706053059)
 
 			dnsblist = open(path)
 
@@ -124,11 +126,11 @@ class DNSblack(AnalysisBase):
 		tableName = common.DB_FLOW_PREFIX + str(config.flow_bucket_sizes[0])
 
 		dnsservers = ["131.159.14.206"]
-		offline = False
+		offline = True
 		offline_network = False
-		bl_files = {"nix" : ("/home/simon/daten/dnsbl/nixspam-ip.dump", 1), "psbl" : ("/home/simon/daten/dnsbl/psbl.txt", 0)}
+		bl_files = {"nix" : ("../dnsbl/nixspam-ip.dump", 1), "psbl" : ("../dnsbl/psbl.txt", 0)}
 		bl_lists = {}
-		bl_network_files = {"drop-spamhaus" : ("/home/simon/daten/dnsbl/drop-spamhaus.txt", 0), "test" : ("/home/simon/daten/dnsbl/testnet", 0), "test2" : ("/home/simon/daten/dnsbl/testnet2", 0)}
+		bl_network_files = {"drop-spamhaus" : ("../dnsbl/drop-spamhaus.txt", 0)}
 		#bl_network_files = {"test" : ("/home/simon/daten/dnsbl/testnet", 0)}
 		bl_network_lists = {}
 		bl_network_lists_prep = {}
@@ -136,7 +138,7 @@ class DNSblack(AnalysisBase):
 		bl_address = ["pbl.spamhaus.org", "zen.spamhaus.org", "sbl.spamhaus.org,", "xbl.spamhaus.org"]
 
 		query = False
-		aggregate = True
+		aggregate = False
 
 		if(offline):
 			for lst in bl_files.keys():
